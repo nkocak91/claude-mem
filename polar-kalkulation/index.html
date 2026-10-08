@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b6f97">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Polar Kalk">
+<title>Polar Kalkulation</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3f6f8; --card:#fff; --text:#1d2830; --muted:#6b7a86; --line:#dbe3e9;
+  --brand:#2b6f97; --brand-soft:#e3f0f7; --ok:#1f8a4c; --warn:#b45309; --danger:#c0392b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
+header img{height:34px}
+header h1{font-size:17px;margin:0;flex:1}
+header button{background:none;border:0;font-size:22px;padding:4px 8px;color:var(--brand)}
+main{max-width:640px;margin:0 auto;padding:12px 16px 120px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--brand);text-transform:uppercase;letter-spacing:.03em}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text)}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);border-color:transparent}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.yn{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.yn:first-of-type{border-top:0}
+.yn span{font-size:14px;flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0}
+.seg button{border:0;background:#fff;padding:8px 14px;font:inherit;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--brand);color:#fff}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:13px;font:inherit;font-weight:600;background:var(--brand);color:#fff;margin-top:10px}
+.btn.sec{background:var(--brand-soft);color:var(--brand)}
+.btn.danger{background:#fbe9e7;color:var(--danger)}
+.btn.small{display:inline-block;width:auto;padding:8px 12px;font-size:14px;margin:0}
+.area{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fbfdfe}
+.area-head{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.area-head button{background:none;border:0;color:var(--danger);font-size:20px}
+.area-res{margin-top:8px;font-size:14px;color:var(--brand);font-weight:600}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;border:0;background:none;padding:10px 2px 8px;font:inherit;font-size:12px;color:var(--muted)}
+.tabs button b{display:block;font-size:18px}
+.tabs button.on{color:var(--brand);font-weight:600}
+.sum{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:9;background:var(--brand);color:#fff;padding:8px 16px;display:flex;justify-content:space-between;font-size:14px}
+.sum b{font-size:16px}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--line);gap:10px}
+.list-item:first-child{border-top:0}
+.list-item .t{font-weight:600}
+.list-item .s{font-size:13px;color:var(--muted)}
+.res{width:100%;border-collapse:collapse;font-size:15px}
+.res td{padding:7px 0;border-top:1px solid var(--line)}
+.res td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.res tr.big td{font-weight:700;font-size:17px}
+.res tr.sub td{color:var(--muted);font-size:13px;border-top:0;padding-top:0}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
+.kpi small{display:block;color:var(--muted);font-size:12px}
+.kpi b{font-size:19px;font-variant-numeric:tabular-nums}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.warn{color:var(--warn)}
+.hidden{display:none!important}
+.srow{display:grid;grid-template-columns:1fr 90px 60px 32px;gap:6px;align-items:end;margin-bottom:6px}
+.srow button{background:none;border:0;color:var(--danger);font-size:20px;padding-bottom:8px}
+.ltab{width:100%;border-collapse:collapse;font-size:14px}
+.ltab td{padding:4px 0}
+.ltab input{padding:6px 8px;text-align:right}
+.ltab td:last-child{width:90px}
+</style>
+</head>
+<body>
+<header>
+  <img src="logo.png" alt="Polar">
+  <h1 id="title">Kalkulation</h1>
+  <button id="btnHome" title="Übersicht">☰</button>
+</header>
+
+<main>
+  <!-- ÜBERSICHT -->
+  <section id="v-home">
+    <button class="btn" id="btnNew">+ Neue Kalkulation</button>
+    <div class="card" style="margin-top:14px">
+      <h2>Gespeichert</h2>
+      <div id="savedList"></div>
+    </div>
+    <button class="btn sec" id="btnSettings">⚙ Einstellungen</button>
+  </section>
+
+  <!-- 1 OBJEKT -->
+  <section id="v-objekt" class="hidden">
+    <div class="card">
+      <h2>Kunde / Objekt</h2>
+      <label>Firma / Kunde</label><input data-b="kunde.name">
+      <label>Ansprechpartner</label><input data-b="kunde.ansprech" placeholder="z. B. Herr Meier / Frau Yilmaz">
+      <label>Straße, Nr.</label><input data-b="kunde.strasse">
+      <label>PLZ, Ort</label><input data-b="kunde.ort">
+      <div class="row">
+        <div><label>Telefon</label><input data-b="kunde.tel" inputmode="tel"></div>
+        <div><label>E-Mail</label><input data-b="kunde.mail" inputmode="email"></div>
+      </div>
+      <label>Objektadresse (falls abweichend)</label><input data-b="kunde.objekt">
+    </div>
+    <div class="card">
+      <h2>Fragebogen</h2>
+      <label>Reinigungszeitfenster</label><input data-b="info.zeitfenster" placeholder="z. B. Mo–Fr ab 17 Uhr">
+      <label>Schlüsselübergabe</label><input data-b="info.schluessel">
+      <div class="row">
+        <div><label>Anzahl Sanitäranlagen</label><input data-b="info.sanitaer" inputmode="numeric"></div>
+        <div><label>Belegschaft im Objekt</label><input data-b="info.belegschaft" inputmode="numeric"></div>
+      </div>
+      <label>Putzkammer vorhanden / Größe</label><input data-b="info.putzkammer">
+      <label>Aktueller Dienstleister</label><input data-b="info.dienstleister">
+      <div style="margin-top:12px">
+        <div class="yn"><span>Verbrauchsmaterial durch Kunde?</span><div class="seg" data-yn="info.materialKunde"></div></div>
+        <div class="yn"><span>Aufzug vorhanden?</span><div class="seg" data-yn="info.aufzug"></div></div>
+        <div class="yn"><span>Putzkammer &amp; Abfall-Sammelstelle in der Nähe?</span><div class="seg" data-yn="info.naehe"></div></div>
+        <div class="yn"><span>Zufrieden mit Reinigungskraft – Übernahme gewünscht?</span><div class="seg" data-yn="info.uebernahme"></div></div>
+        <div class="yn"><span>Zufrieden mit aktueller Reinigungsleistung?</span><div class="seg" data-yn="info.zufrieden"></div></div>
+        <div class="yn"><span>Waschmaschine möglich?</span><div class="seg" data-yn="info.waschmaschine"></div></div>
+      </div>
+      <label>Notizen</label><textarea data-b="info.notizen"></textarea>
+    </div>
+  </section>
+
+  <!-- 2 FLÄCHEN -->
+  <section id="v-flaechen" class="hidden">
+    <div id="areas"></div>
+    <button class="btn sec" id="btnAddArea">+ Bereich hinzufügen</button>
+  </section>
+
+  <!-- 3 ZUSCHLÄGE -->
+  <section id="v-extras" class="hidden">
+    <div class="card">
+      <h2>Reinigungszeit</h2>
+      <div class="yn"><span>Reinigung während Betriebszeit? <small class="hint" id="hBetrieb"></small></span><div class="seg" data-yn="betrieb"></div></div>
+      <div class="hint" id="autoZuschlag"></div>
+    </div>
+    <div class="card">
+      <h2>Verbrauchsmaterial</h2>
+      <div id="matBox"></div>
+    </div>
+    <div class="card">
+      <h2>Glasreinigung</h2>
+      <div class="yn"><span>Glasreinigung gewünscht?</span><div class="seg" data-yn="glas.aktiv"></div></div>
+      <div id="glasBox">
+        <div class="row3">
+          <div><label>Glasfläche m²</label><input data-b="glas.flaeche" inputmode="decimal"></div>
+          <div><label>x pro Jahr</label><input data-b="glas.turnus" inputmode="decimal"></div>
+          <div><label>€ / m²</label><input data-b="glas.preis" inputmode="decimal"></div>
+        </div>
+        <div class="yn"><span>Alle Fenster von innen zu öffnen?</span><div class="seg" data-yn="glas.oeffnen"></div></div>
+        <div class="area-res" id="glasRes"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Sonderleistungen</h2>
+      <div id="sonder"></div>
+      <button class="btn small sec" id="btnAddSonder">+ Position</button>
+      <div class="hint">Preis je Ausführung, Anzahl pro Jahr. Wird im Angebot einzeln aufgeführt.</div>
+    </div>
+  </section>
+
+  <!-- 4 ERGEBNIS -->
+  <section id="v-ergebnis" class="hidden">
+    <div class="kpi">
+      <div><small>Stunden / Woche</small><b id="kStdW"></b></div>
+      <div><small>Stunden / Monat</small><b id="kStdM"></b></div>
+      <div><small>Personal (39 h/Wo)</small><b id="kPers"></b></div>
+      <div><small>€ / m² netto mtl.</small><b id="kQm"></b></div>
+    </div>
+    <div class="card">
+      <h2>Preis pro Monat</h2>
+      <table class="res" id="resTab"></table>
+    </div>
+    <div class="card">
+      <h2>Intern</h2>
+      <table class="res" id="intTab"></table>
+    </div>
+    <div class="card">
+      <h2>Angebot</h2>
+      <label>Angebotsnummer</label><input data-b="angebot.nr">
+      <div class="yn"><span>Stunden im Angebot zeigen?</span><div class="seg" data-yn="angebot.stunden"></div></div>
+      <label>Zusatztext (optional)</label><textarea data-b="angebot.text" placeholder="z. B. Leistungsverzeichnis folgt, Besichtigung am ..."></textarea>
+      <button class="btn" id="btnPdf">Angebots-PDF erstellen</button>
+      <button class="btn sec" id="btnSave">Speichern</button>
+      <button class="btn danger" id="btnDelete">Kalkulation löschen</button>
+    </div>
+  </section>
+
+  <!-- EINSTELLUNGEN -->
+  <section id="v-settings" class="hidden">
+    <div class="card">
+      <h2>Preise</h2>
+      <div class="row">
+        <div><label>Stundenverrechnungssatz €</label><input data-s="svs" inputmode="decimal"></div>
+        <div><label>Stundenlohn € (intern)</label><input data-s="lohn" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Zuschlag Betriebszeit %</label><input data-s="zBetrieb" inputmode="decimal"></div>
+        <div><label>MwSt %</label><input data-s="mwst" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Mehrzeit kein Aufzug %</label><input data-s="zAufzug" inputmode="decimal"></div>
+        <div><label>Mehrzeit weite Wege %</label><input data-s="zWege" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Material € / Person / Monat</label><input data-s="matProKopf" inputmode="decimal"></div>
+        <div><label>Wochen pro Monat</label><input data-s="wochen" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Glas € / m² (Standard)</label><input data-s="glasPreis" inputmode="decimal"></div>
+        <div><label>Angebot gültig (Tage)</label><input data-s="gueltig" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Flächenleistung m²/h</h2>
+      <table class="ltab" id="lTab"></table>
+    </div>
+    <div class="card">
+      <h2>Belagfaktor</h2>
+      <div class="hint">1,00 = normale Leistung. Kleiner = langsamer.</div>
+      <table class="ltab" id="bTab"></table>
+    </div>
+    <div class="card">
+      <h2>Firmendaten fürs Angebot</h2>
+      <label>Firma</label><input data-s="firma.name">
+      <label>Inhaber</label><input data-s="firma.inhaber">
+      <label>Straße</label><input data-s="firma.strasse">
+      <label>PLZ, Ort</label><input data-s="firma.ort">
+      <div class="row">
+        <div><label>Telefon</label><input data-s="firma.tel"></div>
+        <div><label>E-Mail</label><input data-s="firma.mail"></div>
+      </div>
+      <label>Bank / IBAN</label><input data-s="firma.bank">
+      <label>USt-IdNr. / Steuernr.</label><input data-s="firma.ust">
+      <label>Unterschrift (Name)</label><input data-s="firma.unterschrift">
+    </div>
+    <button class="btn danger" id="btnReset">Einstellungen zurücksetzen</button>
+  </section>
+</main>
+
+<div class="sum hidden" id="sumBar"><span id="sumL"></span><b id="sumR"></b></div>
+<nav class="tabs hidden" id="tabs">
+  <button data-v="objekt"><b>①</b>Objekt</button>
+  <button data-v="flaechen"><b>②</b>Flächen</button>
+  <button data-v="extras"><b>③</b>Zusätze</button>
+  <button data-v="ergebnis"><b>④</b>Ergebnis</button>
+</nav>
+
+<script src="jspdf.umd.min.js"></script>
+<script>
+"use strict";
+/* ---------- Stammdaten ---------- */
+const DEFAULTS = {
+  svs: 32, lohn: 15, zBetrieb: 20, zAufzug: 5, zWege: 5, mwst: 19, matProKopf: 3, wochen: 4.33, glasPreis: 1.8, gueltig: 30,
+  leistung: {
+    "Bürofläche":180, "Flur / Verkehrsfläche":250, "Sanitär":60, "Küche / Teeküche":100, "Treppenhaus":150,
+    "Halle / Lager":400, "Produktion":300, "Besprechung":200, "Empfang":180, "Umkleide":120
+  },
+  belag: {
+    "PVC / Linoleum":1.00, "Fliesen":0.95, "Teppich":0.90, "Parkett / Laminat":0.95, "Naturstein":0.90, "Beton / Industrieboden":1.10
+  },
+  firma: { name:"Polar Gebäudereinigung", inhaber:"", strasse:"", ort:"Schwaig", tel:"", mail:"", bank:"", ust:"", unterschrift:"" }
+};
+const TURNUS = [[5,"5x / Woche"],[6,"6x / Woche"],[4,"4x / Woche"],[3,"3x / Woche"],[2,"2x / Woche"],[1,"1x / Woche"],[0.5,"14-tägig"],[0.231,"1x / Monat"]];
+const turnusText = v => (TURNUS.find(t => t[0] === +v) || [0, v + "x / Woche"])[1];
+
+/* ---------- Speicher ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let S = Object.assign({}, structuredClone(DEFAULTS), store.get("polar.settings", {}));
+S.leistung = Object.assign({}, DEFAULTS.leistung, S.leistung);
+S.belag = Object.assign({}, DEFAULTS.belag, S.belag);
+S.firma = Object.assign({}, DEFAULTS.firma, S.firma);
+let saved = store.get("polar.calcs", []);
+let C = null; // aktuelle Kalkulation
+
+/* ---------- Hilfen ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const num = v => {
+  if (typeof v === "number") return v;
+  let s = String(v ?? "").trim().replace(/\s|€|%/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");   // 1.240,5
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");  // 1.240
+  const n = parseFloat(s); return isNaN(n) ? 0 : n;
+};
+const eur = v => v.toLocaleString("de-DE", { style:"currency", currency:"EUR" });
+const fmt = (v, d=1) => v.toLocaleString("de-DE", { minimumFractionDigits:d, maximumFractionDigits:d });
+const getP = (o, p) => p.split(".").reduce((a, k) => a == null ? a : a[k], o);
+const setP = (o, p, v) => { const k = p.split("."); let t = o; k.slice(0,-1).forEach(x => t = t[x] ??= {}); t[k.at(-1)] = v; };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const today = () => new Date().toLocaleDateString("de-DE");
+
+function newCalc(){
+  const d = new Date(), n = String(saved.length + 1).padStart(2, "0");
+  return {
+    id: Date.now().toString(36), created: d.toISOString(),
+    kunde:{}, info:{},
+    bereiche:[{ art:"Bürofläche", flaeche:"", belag:"PVC / Linoleum", turnus:5, leistung:S.leistung["Bürofläche"] }],
+    betrieb:false, material:{ betrag:"" },
+    glas:{ aktiv:false, flaeche:"", turnus:"2", preis:String(S.glasPreis).replace(".", ","), oeffnen:null },
+    sonder:[], angebot:{ nr:`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}-${n}`, stunden:false, text:"" }
+  };
+}
+
+/* ---------- Berechnung ---------- */
+function calc(c){
+  const W = num(S.wochen);
+  const areas = c.bereiche.map(b => {
+    const f = num(b.flaeche), l = num(b.leistung) * (S.belag[b.belag] ?? 1), t = num(b.turnus);
+    const hW = l > 0 ? f / l * t : 0;
+    return { f, hW, hM: hW * W };
+  });
+  const flaeche = areas.reduce((a, x) => a + x.f, 0);
+  let zeitF = 1;
+  if (c.info.aufzug === false) zeitF += num(S.zAufzug) / 100;
+  if (c.info.naehe === false) zeitF += num(S.zWege) / 100;
+  const hW = areas.reduce((a, x) => a + x.hW, 0) * zeitF;
+  const hM = hW * W;
+  const betriebF = c.betrieb ? 1 + num(S.zBetrieb) / 100 : 1;
+  const unterhalt = hM * num(S.svs) * betriebF;
+
+  let material = 0;
+  if (c.info.materialKunde === false){
+    material = c.material.betrag !== "" ? num(c.material.betrag) : num(c.info.belegschaft) * num(S.matProKopf);
+  }
+  const glasJe = c.glas.aktiv ? num(c.glas.flaeche) * num(c.glas.preis) : 0;
+  const glasM = glasJe * num(c.glas.turnus) / 12;
+  const sonder = c.sonder.map(s => ({ text:s.text, preis:num(s.preis), anzahl:num(s.anzahl) }));
+  const sonderM = sonder.reduce((a, s) => a + s.preis * s.anzahl / 12, 0);
+
+  const netto = unterhalt + material;                 // monatlicher Festpreis
+  const nettoGesamt = netto + glasM + sonderM;         // inkl. anteilig Glas/Sonder
+  const mwst = netto * num(S.mwst) / 100;
+  const lohnkosten = hM * num(S.lohn);
+  return { areas, flaeche, zeitF, hW, hM, betriebF, unterhalt, material, glasJe, glasM, sonder, sonderM,
+           netto, mwst, brutto: netto + mwst, nettoGesamt, lohnkosten,
+           svsEff: num(S.svs) * betriebF, pers: hW / 39, qm: flaeche ? netto / flaeche : 0 };
+}
+
+/* ---------- Navigation ---------- */
+let view = "home";
+function show(v){
+  view = v;
+  $$("main > section").forEach(s => s.classList.toggle("hidden", s.id !== "v-" + v));
+  const inCalc = !["home", "settings"].includes(v);
+  $("#tabs").classList.toggle("hidden", !inCalc);
+  $("#sumBar").classList.toggle("hidden", !inCalc || v === "ergebnis");
+  $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  $("#title").textContent = v === "home" ? "Kalkulation" : v === "settings" ? "Einstellungen" : (C?.kunde.name || "Neue Kalkulation");
+  if (v === "home") renderHome();
+  if (v === "settings") renderSettings();
+  if (inCalc) renderCalc();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Übersicht ---------- */
+function renderHome(){
+  const el = $("#savedList");
+  if (!saved.length){ el.innerHTML = '<div class="hint">Noch keine Kalkulation gespeichert.</div>'; return; }
+  el.innerHTML = saved.slice().sort((a, b) => (b.updated || "").localeCompare(a.updated || "")).map(c => {
+    const r = calc(c);
+    return `<div class="list-item" data-id="${c.id}"><div><div class="t">${esc(c.kunde.name || "Ohne Namen")}</div>
+      <div class="s">${fmt(r.flaeche,0)} m² · ${eur(r.netto)}/Monat · ${new Date(c.updated || c.created).toLocaleDateString("de-DE")}</div></div>
+      <button class="btn small sec">Öffnen</button></div>`;
+  }).join("");
+}
+$("#savedList").addEventListener("click", e => {
+  const it = e.target.closest(".list-item"); if (!it) return;
+  C = structuredClone(saved.find(c => c.id === it.dataset.id)); show("objekt");
+});
+
+/* ---------- Bindings ---------- */
+function bindAll(){
+  $$("[data-b]").forEach(i => { const v = getP(C, i.dataset.b); i.value = v ?? ""; });
+  $$("[data-yn]").forEach(renderYN);
+}
+function renderYN(el){
+  const v = getP(C, el.dataset.yn);
+  el.innerHTML = `<button data-v="1" class="${v === true ? "on" : ""}">ja</button><button data-v="0" class="${v === false ? "on" : ""}">nein</button>`;
+}
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.b && C){ setP(C, t.dataset.b, t.value); if (t.dataset.b.startsWith("bereiche.") && t.dataset.b.endsWith(".art")) return; update(); }
+  if (t.dataset.s){ setP(S, t.dataset.s, t.dataset.s.startsWith("firma.") ? t.value : num(t.value)); store.set("polar.settings", S); }
+  if (t.dataset.l){ S.leistung[t.dataset.l] = num(t.value); store.set("polar.settings", S); }
+  if (t.dataset.bf){ S.belag[t.dataset.bf] = num(t.value); store.set("polar.settings", S); }
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest(".seg button"); if (!b || !C) return;
+  const seg = b.parentElement, p = seg.dataset.yn, val = b.dataset.v === "1";
+  setP(C, p, getP(C, p) === val ? null : val);
+  renderYN(seg); update();
+});
+
+/* ---------- Kalkulation rendern ---------- */
+function renderCalc(){ renderAreas(); renderSonder(); bindAll(); update(); }
+
+function renderAreas(){
+  const opt = (list, sel) => list.map(x => `<option ${x == sel ? "selected" : ""}>${esc(x)}</option>`).join("");
+  $("#areas").innerHTML = C.bereiche.map((b, i) => `
+    <div class="card area">
+      <div class="area-head">Bereich ${i + 1}<button data-del="${i}" title="Entfernen">🗑</button></div>
+      <label>Art</label><select data-b="bereiche.${i}.art" data-art="${i}">${opt(Object.keys(S.leistung), b.art)}</select>
+      <div class="row">
+        <div><label>Fläche m²</label><input data-b="bereiche.${i}.flaeche" inputmode="decimal"></div>
+        <div><label>Leistung m²/h</label><input data-b="bereiche.${i}.leistung" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Bodenbelag</label><select data-b="bereiche.${i}.belag">${opt(Object.keys(S.belag), b.belag)}</select></div>
+        <div><label>Turnus</label><select data-b="bereiche.${i}.turnus">${TURNUS.map(t => `<option value="${t[0]}" ${+b.turnus === t[0] ? "selected" : ""}>${t[1]}</option>`).join("")}</select></div>
+      </div>
+      <div class="area-res" data-res="${i}"></div>
+    </div>`).join("");
+  bindAll();
+}
+$("#areas").addEventListener("change", e => {
+  const i = e.target.dataset.art;
+  if (i !== undefined){ C.bereiche[i].leistung = S.leistung[e.target.value]; renderAreas(); update(); }
+});
+$("#areas").addEventListener("click", e => {
+  const d = e.target.closest("[data-del]"); if (!d) return;
+  if (C.bereiche.length > 1 && !confirm("Bereich entfernen?")) return;
+  C.bereiche.splice(+d.dataset.del, 1); renderAreas(); update();
+});
+$("#btnAddArea").onclick = () => {
+  const last = C.bereiche.at(-1);
+  C.bereiche.push({ art:"Flur / Verkehrsfläche", flaeche:"", belag:last?.belag || "PVC / Linoleum", turnus:last?.turnus || 5, leistung:S.leistung["Flur / Verkehrsfläche"] });
+  renderAreas(); update();
+};
+
+function renderSonder(){
+  $("#sonder").innerHTML = C.sonder.map((s, i) => `
+    <div class="srow">
+      <div><label>Leistung</label><input data-b="sonder.${i}.text" placeholder="z. B. Grundreinigung"></div>
+      <div><label>€ je</label><input data-b="sonder.${i}.preis" inputmode="decimal"></div>
+      <div><label>x/Jahr</label><input data-b="sonder.${i}.anzahl" inputmode="decimal"></div>
+      <button data-sdel="${i}">🗑</button>
+    </div>`).join("");
+  bindAll();
+}
+$("#sonder").addEventListener("click", e => {
+  const d = e.target.closest("[data-sdel]"); if (!d) return;
+  C.sonder.splice(+d.dataset.sdel, 1); renderSonder(); update();
+});
+$("#btnAddSonder").onclick = () => { C.sonder.push({ text:"", preis:"", anzahl:"1" }); renderSonder(); };
+
+function update(){
+  if (!C) return;
+  const r = calc(C);
+  r.areas.forEach((a, i) => { const el = $(`[data-res="${i}"]`); if (el) el.textContent = `→ ${fmt(a.hW, 2)} Std/Woche · ${fmt(a.hM)} Std/Monat`; });
+  $("#sumL").textContent = `${fmt(r.flaeche, 0)} m² · ${fmt(r.hM)} Std/Mon.`;
+  $("#sumR").textContent = eur(r.netto) + " netto";
+  $("#hBetrieb").textContent = `(+${fmt(num(S.zBetrieb), 0)} %)`;
+
+  const z = [];
+  if (C.info.aufzug === false) z.push(`kein Aufzug +${fmt(num(S.zAufzug),0)} % Zeit`);
+  if (C.info.naehe === false) z.push(`weite Wege +${fmt(num(S.zWege),0)} % Zeit`);
+  $("#autoZuschlag").textContent = z.length ? "Automatisch aus Fragebogen: " + z.join(", ") : "Keine Mehrzeit aus dem Fragebogen (Aufzug / Wege).";
+
+  const mb = $("#matBox");
+  if (C.info.materialKunde === false){
+    if (!mb.querySelector("input")) mb.innerHTML = `<div class="hint">Polar stellt Verbrauchsmaterial (Hygienepapier, Seife, Müllbeutel).</div>
+      <label>Pauschale € / Monat</label><input data-b="material.betrag" inputmode="decimal"><div class="hint" id="matHint"></div>`;
+    mb.querySelector("input").value = C.material.betrag ?? "";
+    $("#matHint").textContent = `Leer lassen = Belegschaft × ${eur(num(S.matProKopf))} → ${eur(num(C.info.belegschaft) * num(S.matProKopf))}`;
+  } else {
+    mb.innerHTML = `<div class="hint">${C.info.materialKunde === true ? "Kunde beschafft Verbrauchsmaterial selbst." : "Im Fragebogen noch nicht beantwortet (Verbrauchsmaterial durch Kunde?)."}</div>`;
+  }
+
+  $("#glasBox").classList.toggle("hidden", !C.glas.aktiv);
+  $("#glasRes").textContent = `→ ${eur(r.glasJe)} je Durchgang · ${eur(r.glasJe * num(C.glas.turnus))} / Jahr`;
+
+  if (view === "ergebnis"){
+    $("#kStdW").textContent = fmt(r.hW);
+    $("#kStdM").textContent = fmt(r.hM);
+    $("#kPers").textContent = fmt(r.pers, 2) + " VZ";
+    $("#kQm").textContent = eur(r.qm);
+    let h = `<tr><td>Unterhaltsreinigung<br><small class="hint">${fmt(r.hM)} Std × ${eur(num(S.svs))}${C.betrieb ? ` + ${fmt(num(S.zBetrieb),0)} % Betriebszeit` : ""}</small></td><td>${eur(r.unterhalt)}</td></tr>`;
+    if (r.material) h += `<tr><td>Verbrauchsmaterial</td><td>${eur(r.material)}</td></tr>`;
+    h += `<tr class="big"><td>Netto / Monat</td><td>${eur(r.netto)}</td></tr>
+      <tr><td>MwSt ${fmt(num(S.mwst),0)} %</td><td>${eur(r.mwst)}</td></tr>
+      <tr class="big"><td>Brutto / Monat</td><td>${eur(r.brutto)}</td></tr>`;
+    if (r.glasJe) h += `<tr><td>Glasreinigung je Durchgang (${fmt(num(C.glas.turnus),0)}x/Jahr)</td><td>${eur(r.glasJe)}</td></tr>`;
+    r.sonder.forEach(s => { if (s.preis) h += `<tr><td>${esc(s.text || "Sonderleistung")} je Ausführung (${fmt(s.anzahl,0)}x/Jahr)</td><td>${eur(s.preis)}</td></tr>`; });
+    if (r.glasM || r.sonderM) h += `<tr class="sub"><td>alles umgelegt auf den Monat, netto</td><td>${eur(r.nettoGesamt)}</td></tr>`;
+    $("#resTab").innerHTML = h;
+    const db = r.unterhalt - r.lohnkosten;
+    $("#intTab").innerHTML = `
+      <tr><td>Lohnkosten (${fmt(r.hM)} Std × ${eur(num(S.lohn))})</td><td>${eur(r.lohnkosten)}</td></tr>
+      <tr><td>Rest für LNK, Gemeinkosten, Gewinn</td><td>${eur(db)}</td></tr>
+      <tr><td>Effektiver SVS</td><td>${eur(r.svsEff)}</td></tr>
+      <tr><td>Faktor SVS / Lohn</td><td>${num(S.lohn) ? fmt(r.svsEff / num(S.lohn), 2) : "–"}</td></tr>
+      <tr><td>Std / Reinigungstag (bei ${fmt(maxTurnus(),0)} Tagen)</td><td>${fmt(maxTurnus() ? r.hW / maxTurnus() : 0, 2)}</td></tr>
+      ${r.zeitF > 1 ? `<tr><td>Mehrzeit-Faktor</td><td>${fmt(r.zeitF, 2)}</td></tr>` : ""}`;
+  }
+}
+const maxTurnus = () => Math.max(1, ...C.bereiche.map(b => num(b.turnus)).filter(t => t >= 1));
+
+/* ---------- Speichern ---------- */
+function saveCalc(silent){
+  C.updated = new Date().toISOString();
+  const i = saved.findIndex(c => c.id === C.id);
+  if (i >= 0) saved[i] = structuredClone(C); else saved.push(structuredClone(C));
+  store.set("polar.calcs", saved);
+  if (!silent) toast("Gespeichert");
+}
+function toast(t){
+  const d = document.createElement("div");
+  d.textContent = t;
+  d.style.cssText = "position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1d2830;color:#fff;padding:10px 18px;border-radius:20px;z-index:99;font-size:14px";
+  document.body.appendChild(d); setTimeout(() => d.remove(), 1600);
+}
+
+/* ---------- Einstellungen ---------- */
+function renderSettings(){
+  $$("[data-s]").forEach(i => { const v = getP(S, i.dataset.s); i.value = typeof v === "number" ? String(v).replace(".", ",") : (v ?? ""); });
+  $("#lTab").innerHTML = Object.entries(S.leistung).map(([k, v]) => `<tr><td>${esc(k)}</td><td><input data-l="${esc(k)}" value="${v}" inputmode="decimal"></td></tr>`).join("");
+  $("#bTab").innerHTML = Object.entries(S.belag).map(([k, v]) => `<tr><td>${esc(k)}</td><td><input data-bf="${esc(k)}" value="${String(v).replace(".", ",")}" inputmode="decimal"></td></tr>`).join("");
+}
+
+/* ---------- PDF ---------- */
+let logoData = null;
+fetch("logo.png").then(r => r.blob()).then(b => { const f = new FileReader(); f.onload = () => logoData = f.result; f.readAsDataURL(b); }).catch(() => {});
+
+async function makePdf(){
+  if (!window.jspdf){ alert("PDF-Modul nicht geladen. Seite neu laden."); return; }
+  const r = calc(C), F = S.firma, K = C.kunde;
+  const doc = new window.jspdf.jsPDF({ unit:"mm", format:"a4" });
+  const L = 20, R = 190;
+  doc.setFont("helvetica", "normal");
+  if (logoData) doc.addImage(logoData, "PNG", 140, 12, 50, 24.5);
+
+  // Absenderzeile + Empfänger
+  doc.setFontSize(7.5); doc.setTextColor(110);
+  doc.text([F.name, F.strasse, F.ort].filter(Boolean).join(" · "), L, 48);
+  doc.setFontSize(10.5); doc.setTextColor(0);
+  const emp = [K.name, K.ansprech ? "z. Hd. " + K.ansprech : "", K.strasse, K.ort].filter(Boolean);
+  doc.text(emp.length ? emp : ["Kunde"], L, 55);
+
+  // Info rechts
+  const gueltig = new Date(Date.now() + num(S.gueltig) * 864e5).toLocaleDateString("de-DE");
+  doc.setFontSize(9.5);
+  [["Angebot Nr.", C.angebot.nr], ["Datum", today()], ["Gültig bis", gueltig]].forEach(([a, b], i) => {
+    doc.text(a, 140, 55 + i * 5); doc.text(String(b || ""), R, 55 + i * 5, { align:"right" });
+  });
+
+  let y = 88;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  doc.text("Angebot Unterhaltsreinigung", L, y); y += 6;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  const objekt = K.objekt || [K.strasse, K.ort].filter(Boolean).join(", ");
+  if (objekt){ doc.text("Objekt: " + objekt, L, y); y += 8; } else y += 2;
+
+  const ap = (K.ansprech || "").trim();
+  const anrede = /^herr\b/i.test(ap) ? `Sehr geehrter ${ap},` : /^frau\b/i.test(ap) ? `Sehr geehrte ${ap},` : ap ? `Guten Tag ${ap},` : "Sehr geehrte Damen und Herren,";
+  const intro = doc.splitTextToSize(`${anrede}\n\nvielen Dank für Ihre Anfrage und das Gespräch vor Ort. Gerne bieten wir Ihnen die Reinigung Ihres Objekts zu folgenden Konditionen an:`, R - L);
+  doc.text(intro, L, y); y += intro.length * 4.6 + 4;
+
+  // Leistungsumfang
+  const head = (cols, yy) => {
+    doc.setFillColor(43, 111, 151); doc.rect(L, yy - 4.5, R - L, 7, "F");
+    doc.setTextColor(255); doc.setFont("helvetica", "bold"); doc.setFontSize(9.5);
+    cols.forEach(([t, x, al]) => doc.text(t, x, yy, { align: al || "left" }));
+    doc.setTextColor(0); doc.setFont("helvetica", "normal");
+  };
+  head([["Bereich", L + 2], ["Bodenbelag", 85], ["Fläche", 140, "right"], ["Turnus", R - 2, "right"]], y); y += 7;
+  C.bereiche.forEach((b, i) => {
+    if (!num(b.flaeche)) return;
+    if (i % 2) { doc.setFillColor(243, 246, 248); doc.rect(L, y - 4.3, R - L, 6.2, "F"); }
+    doc.text(b.art, L + 2, y); doc.text(b.belag, 85, y);
+    doc.text(fmt(num(b.flaeche), 0) + " m²", 140, y, { align:"right" });
+    doc.text(turnusText(b.turnus), R - 2, y, { align:"right" }); y += 6.2;
+  });
+  doc.setFont("helvetica", "bold");
+  doc.text("Gesamtfläche", L + 2, y); doc.text(fmt(r.flaeche, 0) + " m²", 140, y, { align:"right" });
+  doc.setFont("helvetica", "normal"); y += 10;
+
+  // Preise
+  head([["Position", L + 2], ["Betrag netto", R - 2, "right"]], y); y += 7;
+  const line = (t, v, sub) => {
+    doc.text(t, L + 2, y); doc.text(v, R - 2, y, { align:"right" }); y += 5;
+    if (sub){ doc.setFontSize(8.5); doc.setTextColor(110); doc.text(sub, L + 2, y - 0.8); doc.setTextColor(0); doc.setFontSize(9.5); y += 3.5; }
+    y += 1.2;
+  };
+  doc.setFontSize(9.5);
+  let sub = [];
+  if (C.angebot.stunden) sub.push(`${fmt(r.hM)} Std. / Monat`);
+  if (C.betrieb) sub.push("Reinigung während der Betriebszeit");
+  line("Unterhaltsreinigung pauschal / Monat", eur(r.unterhalt), sub.join(" · "));
+  if (r.material) line("Verbrauchsmaterial (Hygienepapier, Seife, Müllbeutel) / Monat", eur(r.material));
+  doc.setDrawColor(200); doc.line(L, y - 3, R, y - 3);
+  doc.text("Summe netto / Monat", L + 2, y + 1); doc.text(eur(r.netto), R - 2, y + 1, { align:"right" }); y += 5.5;
+  doc.text(`zzgl. ${fmt(num(S.mwst), 0)} % MwSt`, L + 2, y + 1); doc.text(eur(r.mwst), R - 2, y + 1, { align:"right" }); y += 6;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+  doc.text("Gesamt brutto / Monat", L + 2, y + 1); doc.text(eur(r.brutto), R - 2, y + 1, { align:"right" });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); y += 10;
+
+  const extra = [];
+  if (r.glasJe) extra.push([`Glasreinigung, ${fmt(num(C.glas.flaeche),0)} m², ${fmt(num(C.glas.turnus),0)}x jährlich`, eur(r.glasJe) + " je Durchgang"]);
+  r.sonder.forEach(s => { if (s.preis) extra.push([`${s.text || "Sonderleistung"}${s.anzahl ? `, ${fmt(s.anzahl,0)}x jährlich` : ""}`, eur(s.preis) + " je Ausführung"]); });
+  if (extra.length){
+    head([["Zusätzliche Leistungen", L + 2], ["netto", R - 2, "right"]], y); y += 7;
+    extra.forEach(([a, b]) => line(a, b));
+    y += 3;
+  }
+
+  // Bedingungen
+  doc.setFont("helvetica", "bold"); doc.text("Rahmenbedingungen", L, y); y += 5; doc.setFont("helvetica", "normal");
+  const cond = [];
+  if (C.info.zeitfenster) cond.push("Reinigungszeit: " + C.info.zeitfenster);
+  cond.push(C.betrieb ? "Die Reinigung erfolgt während Ihrer Betriebszeit." : "Die Reinigung erfolgt außerhalb Ihrer Betriebszeit.");
+  if (C.info.schluessel) cond.push("Schlüsselübergabe: " + C.info.schluessel);
+  if (C.info.materialKunde === true) cond.push("Verbrauchsmaterial (Hygienepapier, Seife, Müllbeutel) stellt der Auftraggeber.");
+  cond.push("Reinigungsmittel, Maschinen und Geräte sind im Preis enthalten.");
+  if (r.glasJe && C.glas.oeffnen === false) cond.push("Nicht zu öffnende Fenster werden innen nach Absprache gesondert berechnet.");
+  cond.push("Der Preis basiert auf den angegebenen Flächen. Bei Abweichungen passen wir das Angebot an.");
+  if (C.angebot.text) cond.push(C.angebot.text);
+  cond.forEach(t => { const s = doc.splitTextToSize("- " + t, R - L - 3); doc.text(s, L, y); y += s.length * 3.9 + 0.8; });
+  y += 4;
+  const end = doc.splitTextToSize(`Das Angebot ist gültig bis ${gueltig}. Bei Fragen erreichen Sie uns jederzeit. Wir freuen uns auf Ihren Auftrag.\n\nMit freundlichen Grüßen\n\n${F.unterschrift || F.inhaber || ""}\n${F.name}`, R - L);
+  if (y + (end.length - 1) * 4 > 275){ doc.addPage(); y = 25; }
+  doc.text(end, L, y);
+
+  // Fußzeile
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++){
+    doc.setPage(p); doc.setFontSize(7.5); doc.setTextColor(110); doc.setDrawColor(200); doc.line(L, 280, R, 280);
+    doc.text([F.name, F.inhaber ? "Inh. " + F.inhaber : "", F.strasse, F.ort].filter(Boolean).join(" · "), L, 284);
+    doc.text([F.tel ? "Tel. " + F.tel : "", F.mail, F.ust].filter(Boolean).join(" · "), L, 288);
+    if (F.bank) doc.text(F.bank, R, 284, { align:"right" });
+    doc.text(`Seite ${p}/${pages}`, R, 288, { align:"right" });
+  }
+
+  const name = `Angebot_${(K.name || "Kunde").replace(/[^\wäöüÄÖÜß-]+/g, "_")}_${C.angebot.nr || ""}.pdf`;
+  const blob = doc.output("blob");
+  const file = new File([blob], name, { type:"application/pdf" });
+  saveCalc(true);
+  if (navigator.canShare && navigator.canShare({ files:[file] })){
+    try { await navigator.share({ files:[file], title:name }); return; } catch(e){ if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ---------- Buttons ---------- */
+$("#btnNew").onclick = () => { C = newCalc(); show("objekt"); };
+$("#btnHome").onclick = () => { if (C && view !== "settings" && view !== "home") saveCalc(true); show("home"); };
+$("#btnSettings").onclick = () => show("settings");
+$$("#tabs button").forEach(b => b.onclick = () => show(b.dataset.v));
+$("#btnSave").onclick = () => saveCalc();
+$("#btnPdf").onclick = makePdf;
+$("#btnDelete").onclick = () => {
+  if (!confirm("Diese Kalkulation endgültig löschen?")) return;
+  saved = saved.filter(c => c.id !== C.id); store.set("polar.calcs", saved); C = null; show("home");
+};
+$("#btnReset").onclick = () => {
+  if (!confirm("Alle Einstellungen auf Standard zurücksetzen? Firmendaten bleiben erhalten.")) return;
+  const firma = S.firma; S = structuredClone(DEFAULTS); S.firma = firma; store.set("polar.settings", S); renderSettings();
+};
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+show("home");
+</script>
+</body>
+</html>
